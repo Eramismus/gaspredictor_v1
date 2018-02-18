@@ -148,7 +148,7 @@ def main():
     plot_meas = plt.plot(predict_x['AirTemp'], test_y,'x', label="measured")
     plt.legend()
     plt.xlabel("Temperature [C]")
-    plt.ylabel("Gas consumption [MWh]")
+    plt.ylabel("Gas consumption [kWh]")
     plt.title("Temperature and gas consumption")
     plt.savefig("predictions")
     print('--------%%%%%%%%%%%%%%%%%---------')    
