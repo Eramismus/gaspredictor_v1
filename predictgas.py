@@ -34,21 +34,20 @@ def main():
     
     header_out = ['Time', 'Pulse']
     
-    fn_in = 'lboro_2017_11_hourly-gmt+1.csv'
-    fn_out = 'EnicaLogger-211_NOV17_Gasdata-311017.csv'
+    fn_in = 'weatherdata.csv'
+    fn_out = 'gasdata.csv'
     col_in = 'AirTemp'
     col_out = 'Pulse'
     split = 360
     
-    # Parameters
-    learning_rate = 0.01
+    # Parameters - try changing these and see what happens
+    learning_rate = 0.1
     batch_size = 5
+    
+    # Determine if linear or dnn models are trained 0=no training, 1=training
+    # Note: training data is shuffled and model data updated everytime training is conducted
     train_lin = 1
     train_dnn = 1
-
-## Not needed, yet... ##
- #   training_epochs = 1000
- #   display_step = 50
 
     # Run the defined functions to get the data in tensor format
     ds = read_data(fn_in, fn_out,header_in, header_out, col_in, col_out) # create data-set
@@ -63,24 +62,27 @@ def main():
     print('---------------Feature columns-----------------')
     print(feature_columns)
     print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-        # Bucketized column, maybe later...
-        #feature_columns = tf.feature_column.bucketized_column(
-        #source_column = feature_columns,
-        #boundaries = [0, 5, 10, 15, 20, 25, 30])
         
-    # Build 2 hidden layer DNN with 10, 10 units respectively.
+    """Build a linear regression model. You can test around with these."""
     predictor_lin = tf.estimator.LinearRegressor(
          config=tf.estimator.RunConfig(model_dir='./linear_model/', save_summary_steps=100),
          feature_columns=feature_columns)
     
+    """"
+    Build 2 hidden layer DNN with 3, 1 units respectively. Test around with the number of nodes and see what happens.
+    Is it possible to find an optimum? Also change the linear regularization strengths and see what happens.
+    """
     predictor_dnn = tf.estimator.DNNRegressor(
         config=tf.estimator.RunConfig(model_dir='./dnn_model/', save_summary_steps=100),
         feature_columns = feature_columns,
-        hidden_units=[3,1],
+        hidden_units=[3,3],
         optimizer=tf.train.ProximalAdagradOptimizer(
                 learning_rate=learning_rate, 
-                l1_regularization_strength=0.01
+                l1_regularization_strength=1.0,
+                l2_regularization_strength=0.1
             ))
+    
+    """"Note: the model data is pushed to folders linear_model and dnn_model."""
     
     # train the models
     if train_lin == 1:
@@ -97,27 +99,26 @@ def main():
     
     # Evaluate the models - print the outcomes
     print('--------%%%%%%%%%%%%%%%%%---------')
-    print('--------Linear models---------')  
+    print('--------Linear model evaluation---------')  
     eval_result_lin = predictor_lin.evaluate(input_fn =lambda:evaluate_tf(test_x, test_y, batch_size)) 
     print(eval_result_lin)
     print('--------%%%%%%%%%%%%%%%%%---------')
-    print('--------DNN models---------')    
+    print('--------DNN model evaluation---------')    
     eval_result_dnn = predictor_dnn.evaluate(input_fn =lambda:evaluate_tf(test_x, test_y, batch_size)) 
     print(eval_result_dnn)
     print('--------%%%%%%%%%%%%%%%%%---------')
 
-    # Make some predictions
+
+    """The predictions"""
+    """Make some predictions either by using some random values or using the evaluation data"""
     #predict_x = {'AirTemp': [10, 0, -5, 20, 25, -20],
      #            }
     predict_x = test_x
     #predict_y = {'Pulse': [0, 0, 0, 0, 0, 0]}
-    
+  
     predictions_lin = predictor_lin.predict(input_fn = lambda:evaluate_tf(predict_x, batch_size=batch_size))
     predictions_dnn = predictor_dnn.predict(input_fn = lambda:evaluate_tf(predict_x, batch_size=batch_size))
-    
-
-
-    
+      
     pred_arr_lin = []
     pred_arr_dnn = []
     for pred_dict_lin in zip(predictions_lin):
@@ -128,13 +129,34 @@ def main():
         pred_arr_dnn = np.append(pred_arr_dnn,pred_dict_dnn[0]['predictions'])
     
     
-    print(pred_arr_dnn)
-    print(pred_arr_lin)
+    """ Plot and print predictions"""
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    print('--------Prediction input---------')     
     print(predict_x['AirTemp'])
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    print('--------DNN model predictions---------')  
+    print(pred_arr_dnn)
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    print('--------Linear model predictions---------')      
+    print(pred_arr_lin)
+    print('--------%%%%%%%%%%%%%%%%%---------')
     
     print('%%%%%%%%%----Plot Predictions----%%%%%%')
-    plt.plot(predict_x['AirTemp'], pred_arr_lin, 'x', predict_x['AirTemp'], pred_arr_dnn, 'x', predict_x['AirTemp'], test_y,'x')
-        
+    plt.figure(figsize=(11.69,8.27))
+    plot_lin = plt.plot(predict_x['AirTemp'], pred_arr_lin, 'x', label="linear") 
+    plot_dnn = plt.plot(predict_x['AirTemp'], pred_arr_dnn, 'x', label="dnn") 
+    plot_meas = plt.plot(predict_x['AirTemp'], test_y,'x', label="measured")
+    plt.legend()
+    plt.xlabel("Temperature [C]")
+    plt.ylabel("Gas consumption [MWh]")
+    plt.title("Temperature and gas consumption")
+    plt.savefig("predictions")
+    print('--------%%%%%%%%%%%%%%%%%---------')    
+    
     return[]    
     
 main()

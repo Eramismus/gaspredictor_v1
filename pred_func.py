@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """ 
-This file contains the necessary functions for the main program
+This file contains the necessary functions for the main program predictgas.py
 
 """
 
@@ -19,7 +19,7 @@ def read_data(fn_input, fn_output,header_in,header_out,col_in,col_out):
     x = df_x_h[col_in] 
     y = df_y_h[col_out]*0.01*39*0.277777 # convert to kWh
     
-    # Shift to temperatures to correspond with GMT    
+    # Shift to temperatures to correspond with GMT (data in GMT+1)    
     x = x.shift(periods=-1, freq='H', axis=0)
 
     ds = pd.concat([x,y],axis=1)
@@ -29,7 +29,7 @@ def read_data(fn_input, fn_output,header_in,header_out,col_in,col_out):
 
 # Return train and test dataframes    
 def train_test_data(ds,col_in,col_out,split):
-    #Randomize
+    # Randomize the data
     ds_rand = ds.sample(frac=1)
     ds_rand.index = range(720)
 
@@ -37,9 +37,12 @@ def train_test_data(ds,col_in,col_out,split):
     ds_test = ds_rand.loc[split:,:]
     
     train_x = ds_train
-    #print(train_x)
+    # If you want to see your training data uncomment the line below 
+    # print(train_x)
     train_y = ds_train[col_out]
-    #print(train_y)
+    
+    # If you want to see your training data uncomment the line below
+    # print(train_y)
     test_x = ds_test
     test_y = ds_test[col_out]
     
