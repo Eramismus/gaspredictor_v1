@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Jan 27 17:20:47 2018
 
-@author: cvrse
-"""
 
 import tensorflow as tf
 import numpy as np
