@@ -19,16 +19,20 @@ def my_dnnmodel(features,labels,mode,params):
         https://www.tensorflow.org/versions/r0.12/api_docs/python/nn/activation_functions_
     """
     for units in params['hidden_units']:
-        net = tf.layers.dense(net,units=units,activation=tf.nn.relu)
+        net = tf.layers.dense(net,units=units,activation=tf.nn.selu) 
+        # change the activation to see what happens for example: relu6, crelu, selu, softplus or dropout (random)
     
     ''' 
     And the output layer - as logits final form will be calculated with some 
     activation operator i.e. tf.nn...
     '''
     preds = tf.layers.dense(net,params['n_out'],activation=None)
-    
+
     # Compute predictions
-    pred_gas = tf.nn.relu(preds)
+    pred_gas = tf.nn.selu(preds)
+    #pred_gas = preds
+    
+    #print(pred_gas)
     if mode == tf.estimator.ModeKeys.PREDICT:
         predictions = {
                 'Preds': preds,  # Predictions from the network 
@@ -36,9 +40,23 @@ def my_dnnmodel(features,labels,mode,params):
                 'Act_pred': pred_gas # With Relu-activation
                 }
         return tf.estimator.EstimatorSpec(mode, predictions=predictions)
+    print('%%%%%-labels')
+    print(labels)
+    print('%%%%%-predictions')
+    print(preds)
+    print(pred_gas)
     
+    #print('FFFFF')
+    #print(tf.rank(preds))
+    #print(tf.shape(preds))
+    
+    # Reshape for evaluation and make 64 point floats
+    preds = tf.reshape(preds,shape=(-1,))
+    preds = tf.cast(preds,tf.float64)
+    pred_gas = tf.cast(pred_gas,tf.float64)
+    #print(preds)
     # Computation of loss - using mean squared error
-    loss = tf.losses.mean_squared_error(labels=labels, predictions=pred_gas)
+    loss = tf.losses.mean_squared_error(labels=labels, predictions=preds)
     
     # Compute evaluation metric
     meanrelerror = tf.metrics.mean_relative_error(labels=labels, 
@@ -59,9 +77,7 @@ def my_dnnmodel(features,labels,mode,params):
     assert mode == tf.estimator.ModeKeys.TRAIN
         # Optimizer for training
     optimizer = tf.train.AdagradOptimizer(
-                learning_rate=params['learn_rate'],
-                l1_regularization_strength=params['l1reg_rate'],
-                l2_regularization_strength=params['l2reg_rate']
+                learning_rate=params['learn_rate']
                 )
     
     train_op = optimizer.minimize(loss, global_step=tf.train.get_global_step())
@@ -110,12 +126,17 @@ def train_test_data(ds,col_in,col_out,split):
 # Input function for training
 def train_tf(features, labels, batch_size):    
     # dict converts train_x into dictionary
-    dataset = tf.data.Dataset.from_tensor_slices((dict(features), labels))
-    #print(dataset)
+    dataset = tf.data.Dataset.from_tensor_slices((dict(features),labels))
+   # print('%%%%%%%%%%%%%%%%%%%%%%')
+   # print(dataset)
     dataset = dataset.shuffle(1000).repeat(count=100).batch(batch_size)
     
     features_result, labels_result = dataset.make_one_shot_iterator().get_next()
     
+    #print('%%%%%%%%%%%%%%%%%%%%%%')
+    #print(features_result)
+    #print('%%%%%%%%%%%%%%%%%%%%%%')
+    #print(labels_result)
     return features_result, labels_result
 
 

@@ -8,7 +8,7 @@ def launchTensorBoard(tensorBoardPath):
     os.system('tensorboard --logdir=' + tensorBoardPath)
     return
 
-tbpath = r"Directory\to\your\model\folder" #Insert your path to your model folder
+tbpath = r"C:\Users\cvrse\Desktop\dnn_model" #Insert your path to your model folder
 
 import threading
 t = threading.Thread(target=launchTensorBoard(tbpath), args=([]))

@@ -37,7 +37,7 @@ def main():
     split = 360
     
     # Parameters - try changing these and see what happens
-    learning_rate = 0.1
+    learning_rate = 0.3
     batch_size = 5
     
     # Determine if linear or dnn models are trained 0=no training, 1=training
@@ -74,8 +74,8 @@ def main():
         hidden_units=[3,3],
         optimizer=tf.train.ProximalAdagradOptimizer(
                 learning_rate=learning_rate, 
-                l1_regularization_strength=1.0,
-                l2_regularization_strength=0.1
+                l1_regularization_strength=0.00,
+                l2_regularization_strength=0.00
             ))
     
     """"Note: the model data is pushed to folders linear_model and dnn_model."""
@@ -148,7 +148,7 @@ def main():
     plot_meas = plt.plot(predict_x['AirTemp'], test_y,'x', label="measured")
     plt.legend()
     plt.xlabel("Temperature [C]")
-    plt.ylabel("Gas consumption [MWh]")
+    plt.ylabel("Gas consumption [kWh]")
     plt.title("Temperature and gas consumption")
     plt.savefig("predictions")
     print('--------%%%%%%%%%%%%%%%%%---------')    
