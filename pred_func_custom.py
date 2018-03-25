@@ -19,7 +19,7 @@ def my_dnnmodel(features,labels,mode,params):
         https://www.tensorflow.org/versions/r0.12/api_docs/python/nn/activation_functions_
     """
     for units in params['hidden_units']:
-        net = tf.layers.dense(net,units=units,activation=tf.nn.selu) 
+        net = tf.layers.dense(net,units=units,activation=tf.nn.relu) 
         # change the activation to see what happens for example: relu6, crelu, selu, softplus or dropout (random)
     
     ''' 
@@ -29,7 +29,7 @@ def my_dnnmodel(features,labels,mode,params):
     preds = tf.layers.dense(net,params['n_out'],activation=None)
 
     # Compute predictions
-    pred_gas = tf.nn.selu(preds)
+    pred_gas = tf.nn.relu(preds)
     #pred_gas = preds
     
     #print(pred_gas)

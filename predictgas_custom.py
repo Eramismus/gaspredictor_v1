@@ -20,7 +20,7 @@ def main():
 ## Data format - define headers etc. ##
     header_in = ['Time', 'Power', 'AirTemp', 'RH', 'Pressure', 'Total', 'Diffuse', 
            'Total', 'Diffuse', 'Temp', 'Speed',
-          'Dir', 'Rain', 'Voltage', 'Solar Total', 'Solar Diffuse', 
+          'Dir', 'Rain', 'Voltage', 'SolarTotal', 'Solar Diffuse', 
           'Total','Diffuse', 'Rain', 'Dir.Avg2', 'Dir.Std2', 'WindClass2.0', 'WindClass20', 
           'WindClass20', 'WindClass20', 'WindClass20', 'WindClass20', 'WindClass245', 'WindClass245',
           'WindClass245', 'WindClass245', 'WindClass245', 'WindClass245', 'WindClass290', 'WindClass290',
@@ -36,7 +36,7 @@ def main():
     
     fn_in = 'weatherdata.csv'
     fn_out = 'gasdata.csv'
-    col_in = 'AirTemp'
+    col_in = ['AirTemp', 'SolarTotal', 'Speed']
     col_out = 'Pulse'
     split = 600
     
@@ -58,7 +58,9 @@ def main():
     print(train_feats)
     print(train_labels)
     feature_columns = [
-            tf.feature_column.numeric_column(key='AirTemp')
+            tf.feature_column.numeric_column(key='AirTemp'),
+            tf.feature_column.numeric_column(key='SolarTotal'),
+            tf.feature_column.numeric_column(key='Speed')
             ]
     
     print('---------------Feature columns-----------------')
@@ -69,10 +71,10 @@ def main():
     # Define the model
     predictor = tf.estimator.Estimator(
             model_fn=my_dnnmodel,
-            config=tf.estimator.RunConfig(model_dir='./dnn_model_custom/', save_summary_steps=100),
+            config=tf.estimator.RunConfig(model_dir='./dnn_model_mulcols/', save_summary_steps=100),
             params={
                 'feature_cols': feature_columns,
-                'hidden_units': [80,80],
+                'hidden_units': [80,40,20],
                 'learn_rate': learn_rate,
                 'l1reg_rate': l1reg_rate,
                 'l2reg_rate': l2reg_rate,
@@ -120,7 +122,29 @@ def main():
     plt.xlabel("Temperature [C]")
     plt.ylabel("Gas consumption [kWh]")
     plt.title("Temperature and gas consumption")
-    plt.savefig("predictions")
+    plt.savefig("predictions_temp")
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    
+    print('%%%%%%%%%----Plot Predictions----%%%%%%')
+    plt.figure(figsize=(11.69,8.27))
+    plot_dnn = plt.plot(test_x['Speed'], pred_gas_arr, 'x', label="dnn") 
+    plot_meas = plt.plot(test_x['Speed'], test_y,'x', label="measured")
+    plt.legend()
+    plt.xlabel("Wind Speed @ 10 m [m/s]")
+    plt.ylabel("Gas consumption [kWh]")
+    plt.title("Temperature and gas consumption")
+    plt.savefig("predictions_windspeed")
+    print('--------%%%%%%%%%%%%%%%%%---------')
+    
+    print('%%%%%%%%%----Plot Predictions----%%%%%%')
+    plt.figure(figsize=(11.69,8.27))
+    plot_dnn = plt.plot(test_x['SolarTotal'], pred_gas_arr, 'x', label="dnn") 
+    plot_meas = plt.plot(test_x['SolarTotal'], test_y,'x', label="measured")
+    plt.legend()
+    plt.xlabel("Solar Radiation [W/m2]")
+    plt.ylabel("Gas consumption [kWh]")
+    plt.title("Temperature and gas consumption")
+    plt.savefig("predictions_solar")
     print('--------%%%%%%%%%%%%%%%%%---------')
 
     return []  
